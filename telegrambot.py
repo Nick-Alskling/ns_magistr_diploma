@@ -27,7 +27,6 @@ legend_course = {
     "course-2m":"2м"
 }
 
-
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.reply_to(message, f'Я інформаційний чатбот. Приємно познайомитися, {message.from_user.first_name}')
@@ -79,10 +78,25 @@ def group_number(message):
         return
 
 def print_news(message):
+    count = 0
+    a = list()
     with open('news.csv', 'r', newline='', encoding='utf-8') as csvfile:
-        for i in range(3):
-            print(csvfile.readline().encode('utf-8'))
-            bot.send_message(message.chat.id, csvfile.readline().encode('utf-8'))   
+        f_csv = csv.reader(csvfile) 
+        next(f_csv,None)
+        for row in enumerate(f_csv):
+            a.append(row)
+            res = [lis[1] for lis in a]
+            count = count + 1
+            if count == 3:
+                for i in range(len(res)):
+                    bot.send_message(message.chat.id, res[i])
+                break
+
+#def print_news(message):
+    #with open('news.csv', 'r', newline='', encoding='utf-8') as csvfile:
+        #for i in range(3):
+            #print(csvfile.readline().encode('utf-8'))
+            #bot.send_message(message.chat.id, csvfile.readline().encode('utf-8'))  
 
 @bot.callback_query_handler(func=lambda call:True)
 
@@ -93,37 +107,30 @@ def callback_inline(call):
     group = None
     fak_original = None
     course_original = None
-    x = 0
-    y = 0
 
     if "fak" in call.data:
         enter_course_number(call.message)
         store_fak_clicked = call.data
         print(store_fak_clicked)
-        for key, fak_original in legend_fak.items():
-            if key == store_fak_clicked:
-                x=fak_original
-                #print(fak_original)
-                print(x)
+        for fak_key, fak_original in legend_fak.items():
+            if fak_key == store_fak_clicked:
+               print(fak_original)
     if "course" in call.data:
         enter_group_number(call.message)
         store_course_clicked = call.data
         print(store_course_clicked)
-        for key, course_original in legend_course.items():
-            if key == store_course_clicked:
-                #print(course_original)
-                y = course_original
-                print(y)
-    value = (schedule_sorted[(schedule_sorted['Факультет']==x) & (schedule_sorted['Курс']==y)]['URL']).array
-    print(value)
-    
+        for course_key, course_original in legend_course.items():
+            if course_key == store_course_clicked:
+                print(course_original)
+            value = (schedule_sorted[(schedule_sorted['Факультет']==fak_original) & (schedule_sorted['Курс']==course_original)]['URL']).array
+            print(value)
 
-    
+
 ###################################################################################################################################################################
     
     if call.data == "mainmenu":
         keyboardmain = types.InlineKeyboardMarkup(row_width=2)
-        get_schedule = types.InlineKeyboardButton(text="Графік навчального процесу", callback_data="get-schedule")
+        get_schedule = types.InlineKeyboardButton(text="Розклад навчального процесу", callback_data="get-schedule")
         get_news = types.InlineKeyboardButton(text="Новини", callback_data="get-news")
         get_kafedra = types.InlineKeyboardButton(text="Факультети і кафедри", callback_data="get-kafedra")
         get_contacts = types.InlineKeyboardButton(text="Контакти", callback_data="get-contacts")
@@ -157,7 +164,7 @@ def callback_inline(call):
         more_news = types.InlineKeyboardButton(text="Читати більше на сайті", callback_data="read_more")
         backbutton = types.InlineKeyboardButton(text="До головного меню", callback_data="mainmenu")
         keyboard.add(more_news,backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Виведено останні 5 новин:", reply_markup=keyboard)
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Виведено останні 3 новини:", reply_markup=keyboard)
 ###################################################################################################################################################################
     
     elif call.data == "get-kafedra":

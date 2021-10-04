@@ -75,4 +75,6 @@ result_schedule_prefinal['URL'].values[:5]
 schedule_sorted = result_schedule_prefinal.sort_values(by=['Факультет', 'Курс'])
 schedule_sorted.set_index('Факультет')[:7]
 schedule_sorted.to_csv('schedule.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Факультет', 'Курс', 'URL'])
+pd.set_option("display.max_colwidth", 10000)
+print(schedule_sorted)
 print(schedule_sorted.dtypes)

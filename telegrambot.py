@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
 bot = telebot.TeleBot('1796930178:AAFZUChk3App456JxIjSQkvKOzrVjAIApi0')
+pd.set_option("display.max_colwidth", 10000)
 
 store_fak_clicked = None
 store_course_clicked = None
@@ -72,8 +73,14 @@ def enter_course_number(message):
     bot.send_message(message.chat.id, "Виберіть курс:", reply_markup=keyboard)
 
 def enter_group_number(message):
-    bot.send_message(message.chat.id, 'Введіть номер групи')
+    bot.send_message(message.chat.id, 'Виберіть номер групи')
     bot.register_next_step_handler(message, group_number)
+    # buttons_list = []
+    # for item in list_button_name:
+    #     buttons_list.append([InlineKeyboardButton(text=item, callback_data=item)])
+
+    # keyboard_inline_buttons = InlineKeyboardMarkup(inline_keyboard=buttons_list)
+
 
 def group_number(message):
     group = message.text
@@ -120,6 +127,9 @@ def callback_inline(call):
     global group
     global fak_original
     global course_original
+    global url
+    global group_number
+    global header_list_final
 
     if "fak" in call.data:
         enter_course_number(call.message)
@@ -132,12 +142,32 @@ def callback_inline(call):
         store_course_clicked = call.data
         #print(store_course_clicked)
         course_original = legend_course.get(store_course_clicked)
-        print(course_original, not(course_original))
+        # print(course_original, not(course_original))
         M = schedule_sorted.loc[(schedule_sorted['Факультет'] == fak_original) & (schedule_sorted['Курс'].isin([course_original]))]
-        print(M)
-        N = M[M.columns[2]].to_string(index=False)
-        print(N)
-        bot.send_message(call.message.chat.id, N)
+        # print(M)
+        url = M[M.columns[2]].to_string(index=False)
+        # print(url)
+        bot.send_message(call.message.chat.id, url)
+        s=requests.get(url).content
+        excel_file= pd.ExcelFile(s)
+        sheet_to_find = "Розклад"
+        sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+        sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+        index = sheet_names.index(sheet_to_find.lower())# Get the index that matches our sheet to find
+        df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+        df = df.replace('\n','', regex=True)
+        c = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+        new_header = c.iloc[0] #grab the first row for the header
+        c = c[1:] #take the data less the header row
+        c.columns = new_header #set the header row as the df header
+        # print(c)
+        header_list = list(c.columns)
+        header_list_final = [s for s in header_list if s.endswith('група')]
+        print(header_list_final)
+        bot.send_message(call.message.chat.id, header_list_final)
+        x = c[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
+        print(x)
+    
 ###################################################################################################################################################################
     
     if call.data == "mainmenu":

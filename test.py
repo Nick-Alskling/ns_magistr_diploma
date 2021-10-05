@@ -46,3 +46,21 @@ for sheet_name in excel_file.sheet_names:
         schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
         # print(x)
         schedule_df_group.to_excel("output.xlsx", index = False)
+
+
+##############################################################################\
+
+# def print_news(message):
+#     count = 0
+#     a = list()
+#     with open('news.csv', 'r', newline='', encoding='utf-8') as csvfile:
+#         f_csv = csv.reader(csvfile) 
+#         next(f_csv,None)
+#         for row in enumerate(f_csv):
+#             a.append(row)
+#             res = [lis[1] for lis in a]
+#             count = count + 1
+#             if count == 3:
+#                 for i in range(len(res)):
+#                     bot.send_message(message.chat.id, res[i])
+#                 break

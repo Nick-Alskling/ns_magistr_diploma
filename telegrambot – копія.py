@@ -13,11 +13,10 @@ pd.set_option("display.max_colwidth", 10000)
 
 store_fak_clicked = None
 store_course_clicked = None
-fak_course_url_final = None
+group = None
 fak_original = None
 course_original = None
 group_list = None
-store_group_clicked = None
 
 legend_fak = {
     "fak_FMTP":"ФМТП",
@@ -76,6 +75,9 @@ def enter_course_number(message):
     keyboard_course.add(course_1, course_2, course_3, course_4, course_1m, course_2m, backbutton)
     bot.send_message(message.chat.id, "Виберіть курс:", reply_markup=keyboard_course)
 
+def enter_group_number(message):
+    bot.register_next_step_handler(message, callback_inline)
+
 ##################################################################################################################################################################################
 
 def print_news(message):
@@ -86,110 +88,104 @@ def print_news(message):
 
 ############################################################################################################################################################################
 
-@bot.callback_query_handler(func=lambda call: "fak" in call.data )
-def fak_find(call):
-    global store_fak_clicked
-    global fak_original
-    store_fak_clicked = call.data
-    #print(store_fak_clicked)
-    fak_original = legend_fak.get(store_fak_clicked)
-    enter_course_number(call.message)
-    # print(fak_original, not(fak_original))
+@bot.callback_query_handler(func=lambda call: True)
 
-@bot.callback_query_handler(func=lambda call: "course" in call.data)
-def course_find(call):
-    global store_course_clicked
-    global course_original
-    store_course_clicked = call.data
-    #print(store_course_clicked)
-    course_original = legend_course.get(store_course_clicked)
-    find_fak_course(call.message)
-    # print(course_original, not(course_original))
+def callback_inline(call):
     
-@bot.callback_query_handler(func=lambda call: "fak" and "course" in call.data)
-def find_fak_course(call):
-    global fak_course_url_final
-    fak_course_url = schedule_sorted.loc[(schedule_sorted['Факультет'] == fak_original) & (schedule_sorted['Курс'].isin([course_original]))]
-    fak_course_url_final = fak_course_url[fak_course_url.columns[2]].to_string(index=False)
-    # print(fak_course_url_final)
-    # print(type(fak_course_url_final))
-    call.data = fak_course_url_final
-    # bot.send_message(call.chat.id, fak_course_url_final)
-    get_group_list(call)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('http'))
-def get_group_list(call):
+    global store_fak_clicked
+    global store_course_clicked
+    global group
+    global fak_original
+    global course_original
     global group_list
-    schedule_df=requests.get(fak_course_url_final).content
-    excel_file= pd.ExcelFile(schedule_df)
-    # print(excel_file)
-    for sheet_name in excel_file.sheet_names:
-        df = excel_file.parse(sheet_name)
-        if sheet_name == "Розклад":
-            sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
-            sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
-            index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
-            df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
-            df = df.replace('\n','', regex=True)
-            schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
-            # print(schedule_df_new)
-            new_header = schedule_df_new.iloc[0] #grab the first row for the header
-            schedule_df_new = schedule_df_new[1:] #take the data less the header row
-            schedule_df_new.columns = new_header #set the header row as the df header
-            schedule_df_final = schedule_df_new
-            schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
-            # print(schedule_df_final)
-            header_list = list(schedule_df_final.columns)
-            group_list = [x for x in header_list if x.endswith('група')]
-            print(group_list)
-            print(type(group_list))
 
-        elif sheet_name == "Лист1":
-            sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
-            sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
-            index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
-            df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
-            df = df.replace('\n','', regex=True)
-            schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
-            new_header = schedule_df_new.iloc[0] #grab the first row for the header
-            schedule_df_new = schedule_df_new[1:] #take the data less the header row
-            schedule_df_new.columns = new_header #set the header row as the df header
-            schedule_df_final = schedule_df_new
-            schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
-            header_list = list(schedule_df_final.columns)
-            group_list = [x for x in header_list if x.endswith('група')]
-            print(group_list)
-            print(type(group_list))
-            # group_number = "4 група"
-            # schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
-            # schedule_df_group.to_excel("output.xlsx", index = False)
+    if "fak" in call.data:
+        enter_course_number(call.message)
+        store_fak_clicked = call.data
+        #print(store_fak_clicked)
+        fak_original = legend_fak.get(store_fak_clicked)
+        #print(fak_original, not(fak_original))
+    if "course" in call.data:
+        enter_group_number(call.message)
+        store_course_clicked = call.data
+        #print(store_course_clicked)
+        course_original = legend_course.get(store_course_clicked)
+        # print(course_original, not(course_original))
+        fak_course_url = schedule_sorted.loc[(schedule_sorted['Факультет'] == fak_original) & (schedule_sorted['Курс'].isin([course_original]))]
+        #print(M)
+        fak_course_url_final = fak_course_url[fak_course_url.columns[2]].to_string(index=False)
+        #print(url)
+        #(type(url))
+        bot.send_message(call.message.chat.id, fak_course_url_final)
 
-    if group_list != None:
-        def build_menu(buttons,n_cols,header_buttons=None,footer_buttons=None):
-            menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
-            if header_buttons:
-                menu.insert(0, header_buttons)
-            if footer_buttons:
-                menu.append(footer_buttons)
-            return menu
+
+
+        schedule_df=requests.get(url).content
+        excel_file= pd.ExcelFile(schedule_df)
+        # print(excel_file)
+        for sheet_name in excel_file.sheet_names:
+            df = excel_file.parse(sheet_name)
+            if sheet_name == "Розклад":
+                sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+                sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+                index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+                df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+                df = df.replace('\n','', regex=True)
+                schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+                # print(schedule_df_new)
+                new_header = schedule_df_new.iloc[0] #grab the first row for the header
+                schedule_df_new = schedule_df_new[1:] #take the data less the header row
+                schedule_df_new.columns = new_header #set the header row as the df header
+                schedule_df_final = schedule_df_new
+                schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+                # print(schedule_df_final)
+                header_list = list(schedule_df_final.columns)
+                group_list = [x for x in header_list if x.endswith('група')]
+                # print(group_list)
+                # print(type(group_list))
+
+            elif sheet_name == "Лист1":
+                sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+                sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+                index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+                df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+                df = df.replace('\n','', regex=True)
+                schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+                new_header = schedule_df_new.iloc[0] #grab the first row for the header
+                schedule_df_new = schedule_df_new[1:] #take the data less the header row
+                schedule_df_new.columns = new_header #set the header row as the df header
+                schedule_df_final = schedule_df_new
+                schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+                header_list = list(schedule_df_final.columns)
+                group_list = [x for x in header_list if x.endswith('група')]
+                # group_number = "4 група"
+                # schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
+                # schedule_df_group.to_excel("output.xlsx", index = False)
+
+        if group_list != None:
+            def build_menu(buttons,n_cols,header_buttons=None,footer_buttons=None):
+                menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
+                if header_buttons:
+                    menu.insert(0, header_buttons)
+                if footer_buttons:
+                    menu.append(footer_buttons)
+                return menu
 
         button_list = []
         for each in group_list:
             button_list.append(types.InlineKeyboardButton(each, callback_data = each))
         keyboard_group=types.InlineKeyboardMarkup(build_menu(button_list, n_cols=3)) #n_cols = 1 is for single column and mutliple rows
-        bot.send_message(call.chat.id, text='Виберіть групу:', reply_markup=keyboard_group)
-        print(keyboard_group)
-#             print_group_schedule(call)
+        bot.send_message(call.message.chat.id, text='Виберіть групу:', reply_markup=keyboard_group)
+        print(keyboard_group.callback_data)
 
-# @bot.callback_query_handler(func=lambda call: )
-# def print_group_schedule(call):
-#     global store_group_clicked
-#     store_group_clicked = call.data
-#     print(store_group_clicked)
+
+
+
+
+
 
 ###################################################################################################################################################################
-@bot.callback_query_handler(func=lambda call: True)
-def callback_inline(call):   
+    
     if call.data == "mainmenu":
         keyboardmain = types.InlineKeyboardMarkup(row_width=2)
         get_schedule = types.InlineKeyboardButton(text="Розклад навчального процесу", callback_data="get-schedule")

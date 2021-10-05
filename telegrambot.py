@@ -73,22 +73,66 @@ def enter_course_number(message):
     bot.send_message(message.chat.id, "Виберіть курс:", reply_markup=keyboard)
 
 def enter_group_number(message):
-    bot.send_message(message.chat.id, 'Виберіть номер групи')
-    bot.register_next_step_handler(message, group_number)
-    # buttons_list = []
-    # for item in list_button_name:
-    #     buttons_list.append([InlineKeyboardButton(text=item, callback_data=item)])
+    bot.register_next_step_handler(message, callback_inline)
+    schedule_df=requests.get(url).content
+    excel_file= pd.ExcelFile(schedule_df)
+    print(excel_file)
+    for sheet_name in excel_file.sheet_names:
+        df = excel_file.parse(sheet_name)
+        if sheet_name == "Розклад":
+            sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+            sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+            index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+            df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+            df = df.replace('\n','', regex=True)
+            schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+            print(schedule_df_new)
+            new_header = schedule_df_new.iloc[0] #grab the first row for the header
+            schedule_df_new = schedule_df_new[1:] #take the data less the header row
+            schedule_df_new.columns = new_header #set the header row as the df header
+            schedule_df_final = schedule_df_new
+            schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+            print(schedule_df_final)
+            header_list = list(schedule_df_final.columns)
+            group_list = [x for x in header_list if x.endswith('група')]
+            print(group_list)
+            print(type(group_list))
 
-    # keyboard_inline_buttons = InlineKeyboardMarkup(inline_keyboard=buttons_list)
+            button_list = []
+            for each in group_list:
+                button_list.append(types.InlineKeyboardButton(each, callback_data = each))
+            reply_markup=types.InlineKeyboardMarkup(button_list) #n_cols = 1 is for single column and mutliple rows
+            bot.send_message(message.chat_id, text='Choose from the following', reply_markup=reply_markup)
 
+            # group_number = "4м група"
+            # schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
+            # schedule_df_group.to_excel("output.xlsx", index = False)
+            
+        elif sheet_name == "Лист1":
+            sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+            sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+            index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+            df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+            df = df.replace('\n','', regex=True)
+            schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+            new_header = schedule_df_new.iloc[0] #grab the first row for the header
+            schedule_df_new = schedule_df_new[1:] #take the data less the header row
+            schedule_df_new.columns = new_header #set the header row as the df header
+            schedule_df_final = schedule_df_new
+            schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+            header_list = list(schedule_df_final.columns)
+            group_list = [x for x in header_list if x.endswith('група')]
+            group_number = "4 група"
+            schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
+            schedule_df_group.to_excel("output.xlsx", index = False)
 
-def group_number(message):
-    group = message.text
-    print(group)
-    if not group.isdigit():
-        msg = bot.reply_to(message, 'Введіть число, будь ласка.')
-        bot.register_next_step_handler(msg, group_number)
-        return
+# def group_number(message):
+#     group = message.text
+#     print(group)
+#     if not group.isdigit():
+#         msg = bot.reply_to(message, 'Введіть число, будь ласка.')
+#         bot.register_next_step_handler(msg, group_number)
+#         return
 
 # def print_news(message):
 #     count = 0
@@ -128,15 +172,13 @@ def callback_inline(call):
     global fak_original
     global course_original
     global url
-    global group_number
-    global header_list_final
 
     if "fak" in call.data:
         enter_course_number(call.message)
         store_fak_clicked = call.data
         #print(store_fak_clicked)
         fak_original = legend_fak.get(store_fak_clicked)
-        print(fak_original, not(fak_original))
+        #print(fak_original, not(fak_original))
     if "course" in call.data:
         enter_group_number(call.message)
         store_course_clicked = call.data
@@ -144,30 +186,12 @@ def callback_inline(call):
         course_original = legend_course.get(store_course_clicked)
         # print(course_original, not(course_original))
         M = schedule_sorted.loc[(schedule_sorted['Факультет'] == fak_original) & (schedule_sorted['Курс'].isin([course_original]))]
-        # print(M)
+        #print(M)
         url = M[M.columns[2]].to_string(index=False)
-        # print(url)
+        #print(url)
+        #(type(url))
         bot.send_message(call.message.chat.id, url)
-        s=requests.get(url).content
-        excel_file= pd.ExcelFile(s)
-        sheet_to_find = "Розклад"
-        sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
-        sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
-        index = sheet_names.index(sheet_to_find.lower())# Get the index that matches our sheet to find
-        df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
-        df = df.replace('\n','', regex=True)
-        c = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
-        new_header = c.iloc[0] #grab the first row for the header
-        c = c[1:] #take the data less the header row
-        c.columns = new_header #set the header row as the df header
-        # print(c)
-        header_list = list(c.columns)
-        header_list_final = [s for s in header_list if s.endswith('група')]
-        print(header_list_final)
-        bot.send_message(call.message.chat.id, header_list_final)
-        x = c[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
-        print(x)
-    
+                    
 ###################################################################################################################################################################
     
     if call.data == "mainmenu":

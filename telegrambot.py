@@ -18,6 +18,7 @@ fak_original = None
 course_original = None
 group_list = None
 store_group_clicked = None
+i = None
 
 legend_fak = {
     "fak_FMTP":"ФМТП",
@@ -158,8 +159,8 @@ def get_group_list(call):
             schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
             header_list = list(schedule_df_final.columns)
             group_list = [x for x in header_list if x.endswith('група')]
-            print(group_list)
-            print(type(group_list))
+            # print(group_list)
+            # print(type(group_list))
             # group_number = "4 група"
             # schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
             # schedule_df_group.to_excel("output.xlsx", index = False)
@@ -178,15 +179,24 @@ def get_group_list(call):
             button_list.append(types.InlineKeyboardButton(each, callback_data = each))
         keyboard_group=types.InlineKeyboardMarkup(build_menu(button_list, n_cols=3)) #n_cols = 1 is for single column and mutliple rows
         bot.send_message(call.chat.id, text='Виберіть групу:', reply_markup=keyboard_group)
-        print(keyboard_group)
-#             print_group_schedule(call)
+        print(call.data == each)
 
-# @bot.callback_query_handler(func=lambda call: )
+        # global i
+        # keyboard = types.InlineKeyboardMarkup()
+        # for i in group_list:
+        #     button1 = types.InlineKeyboardButton(text=i, callback_data=i[0])
+        #     keyboard.add(button1)
+        # bot.send_message(call.chat.id, "Выберите автомобиль из списка:", reply_markup=keyboard)
+        # print(i)
+        # print_group_schedule(call)
+
+
+
+# @bot.callback_query_handler(func=lambda call: call.data != None and call.data == each)
 # def print_group_schedule(call):
-#     global store_group_clicked
-#     store_group_clicked = call.data
-#     print(store_group_clicked)
-
+#     print(i)
+#     if call.data in group_list:
+#         bot.edit_message_text(call.chat.id, text=i)
 ###################################################################################################################################################################
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):   

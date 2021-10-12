@@ -8,6 +8,8 @@ from get_schedule import schedule_sorted
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
+import numpy as np
+import dataframe_image as dfi
 bot = telebot.TeleBot('1796930178:AAFZUChk3App456JxIjSQkvKOzrVjAIApi0')
 pd.set_option("display.max_colwidth", 10000)
 
@@ -18,7 +20,8 @@ fak_original = None
 course_original = None
 group_list = None
 store_group_clicked = None
-i = None
+schedule_df_final = None
+header_list = None
 
 legend_fak = {
     "fak_FMTP":"ФМТП",
@@ -121,6 +124,8 @@ def find_fak_course(call):
 @bot.callback_query_handler(func=lambda call: call.data.startswith('http'))
 def get_group_list(call):
     global group_list
+    global schedule_df_final
+    global header_list
     schedule_df=requests.get(fak_course_url_final).content
     excel_file= pd.ExcelFile(schedule_df)
     # print(excel_file)
@@ -144,6 +149,7 @@ def get_group_list(call):
             group_list = [x for x in header_list if x.endswith('група')]
             print(group_list)
             print(type(group_list))
+            print_group_schedule(call)
 
         elif sheet_name == "Лист1":
             sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
@@ -159,44 +165,31 @@ def get_group_list(call):
             schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
             header_list = list(schedule_df_final.columns)
             group_list = [x for x in header_list if x.endswith('група')]
+            print_group_schedule(call)
             # print(group_list)
             # print(type(group_list))
             # group_number = "4 група"
-            # schedule_df_group = schedule_df_final[[header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
-            # schedule_df_group.to_excel("output.xlsx", index = False)
 
-    if group_list != None:
-        def build_menu(buttons,n_cols,header_buttons=None,footer_buttons=None):
-            menu = [buttons[i:i + n_cols] for i in range(0, len(buttons), n_cols)]
-            if header_buttons:
-                menu.insert(0, header_buttons)
-            if footer_buttons:
-                menu.append(footer_buttons)
-            return menu
+def print_group_schedule(call):
+    keyboard_group = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
+    for button_content in group_list:
+        btn =  types.KeyboardButton(button_content)
+        keyboard_group.add(btn)
+    msg = bot.send_message(call.chat.id, 'Выберите', reply_markup=keyboard_group)
+    bot.register_next_step_handler(msg, on_selection)
+def on_selection(message):
+    group_number = message.text
+    print(group_number)
+    schedule_df_group = schedule_df_final[[header_list[-1], header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
+    schedule_df_group[group_number] = schedule_df_group[group_number] + ' ' + schedule_df_group.shift(-1)[group_number]
+    schedule_df_group = schedule_df_group.dropna(thresh=2).reset_index(drop=True)
+    schedule_df_group.to_excel("output.xlsx", index = False)
+    schedule_df_group_styled = schedule_df_group.style.background_gradient()
+    dfi.export(schedule_df_group_styled,"mytable.png")
+    schedule_img = open("mytable.png", 'rb')
+    bot.send_photo(message.chat.id, schedule_img)
+    # bot.send_message(message.chat.id, schedule_pic)
 
-        button_list = []
-        for each in group_list:
-            button_list.append(types.InlineKeyboardButton(each, callback_data = each))
-        keyboard_group=types.InlineKeyboardMarkup(build_menu(button_list, n_cols=3)) #n_cols = 1 is for single column and mutliple rows
-        bot.send_message(call.chat.id, text='Виберіть групу:', reply_markup=keyboard_group)
-        print(call.data == each)
-
-        # global i
-        # keyboard = types.InlineKeyboardMarkup()
-        # for i in group_list:
-        #     button1 = types.InlineKeyboardButton(text=i, callback_data=i[0])
-        #     keyboard.add(button1)
-        # bot.send_message(call.chat.id, "Выберите автомобиль из списка:", reply_markup=keyboard)
-        # print(i)
-        # print_group_schedule(call)
-
-
-
-# @bot.callback_query_handler(func=lambda call: call.data != None and call.data == each)
-# def print_group_schedule(call):
-#     print(i)
-#     if call.data in group_list:
-#         bot.edit_message_text(call.chat.id, text=i)
 ###################################################################################################################################################################
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):   

@@ -35,7 +35,6 @@ rasp_lines[1:]
 hrefs = [[a['href'], a.text.split('\n')[0]] for a in rasp_lines[1].find_all('a')]
 #print(hrefs)
 
-
 back_mag = parsed_rasp.find('span', text='МАГІСТР')
 rasp_table_mag = back_mag.find_parent('strong').find_parent('h3').findNextSibling('table')
 rasp_lines_mag = rasp_table_mag.find_all('tr')
@@ -72,9 +71,9 @@ result_schedule_prefinal = pd.concat([schedule_prefinal, schedule_prefinal_mag],
 #print(df.head(10))
 result_schedule_prefinal['URL'].values[:5]
 # відсортуєм по факультету-курсу
-schedule_sorted = result_schedule_prefinal.sort_values(by=['Факультет', 'Курс'])
-schedule_sorted.set_index('Факультет')[:7]
-schedule_sorted.to_csv('schedule.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Факультет', 'Курс', 'URL'])
+schedule_regular_sorted = result_schedule_prefinal.sort_values(by=['Факультет', 'Курс'])
+schedule_regular_sorted.set_index('Факультет')[:7]
+schedule_regular_sorted.to_csv('schedule.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Факультет', 'Курс', 'URL'])
 pd.set_option("display.max_colwidth", 10000)
-print(schedule_sorted)
-print(schedule_sorted.dtypes)
+print(schedule_regular_sorted)
+print(schedule_regular_sorted.dtypes)

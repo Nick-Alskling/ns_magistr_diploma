@@ -2,9 +2,9 @@ import telebot
 from telebot import types
 import random
 import csv
-import get_schedule
+import get_regular_schedule
 import get_news
-from get_schedule import schedule_sorted
+from get_regular_schedule import schedule_regular_sorted
 import requests
 from bs4 import BeautifulSoup as bs
 import pandas as pd
@@ -12,6 +12,8 @@ import numpy as np
 import dataframe_image as dfi
 bot = telebot.TeleBot('1796930178:AAFZUChk3App456JxIjSQkvKOzrVjAIApi0')
 pd.set_option("display.max_colwidth", 10000)
+
+hideBoard = types.ReplyKeyboardRemove()
 
 store_fak_clicked = None
 store_course_clicked = None
@@ -22,6 +24,7 @@ group_list = None
 store_group_clicked = None
 schedule_df_final = None
 header_list = None
+keyboardmain = None
 
 legend_fak = {
     "fak_FMTP":"ФМТП",
@@ -47,13 +50,14 @@ def send_welcome(message):
 ############################################################################################################################################################################
 
 @bot.message_handler(content_types=["text"])
-def any_msg(message):
+def main_menu(message):
     keyboardmain = types.InlineKeyboardMarkup(row_width=2)
     get_schedule = types.InlineKeyboardButton(text="Графік навчального процесу", callback_data="get-schedule")
     get_news = types.InlineKeyboardButton(text="Новини", callback_data="get-news")
     get_kafedra = types.InlineKeyboardButton(text="Факультети і кафедри", callback_data="get-kafedra")
     get_contacts = types.InlineKeyboardButton(text="Контакти", callback_data="get-contacts")
-    keyboardmain.add(get_schedule, get_news, get_kafedra, get_contacts)
+    get_chart = types.InlineKeyboardButton(text="Карта", callback_data="get_map")
+    keyboardmain.add(get_schedule, get_news, get_kafedra, get_contacts, get_chart)
     bot.send_message(message.chat.id, f"Натисніть, аби перейти:", reply_markup=keyboardmain)
 
 def enter_fakulty_name(message):
@@ -66,7 +70,7 @@ def enter_fakulty_name(message):
     fak_FFO = types.InlineKeyboardButton(text="ФФО", callback_data="fak_FFO")
     backbutton = types.InlineKeyboardButton(text="Назад", callback_data="mainmenu")
     keyboard_fak.add(fak_FMTP, fak_FTM, fak_FEMP, fak_FIT, fak_FRGTB, fak_FFO, backbutton)
-    bot.send_message(message.chat.id, "Виберіть факультет:", reply_markup=keyboard_fak)
+    bot.send_message(message.chat.id, "Виберіть факультет", reply_markup=keyboard_fak)
 
 def enter_course_number(message):
     keyboard_course = types.InlineKeyboardMarkup(row_width=3)
@@ -110,16 +114,27 @@ def course_find(call):
     find_fak_course(call.message)
     # print(course_original, not(course_original))
     
-@bot.callback_query_handler(func=lambda call: "fak" and "course" in call.data)
+@bot.callback_query_handler(func=lambda call: "schedule-regular" and "fak" and "course" in call.data)
 def find_fak_course(call):
     global fak_course_url_final
-    fak_course_url = schedule_sorted.loc[(schedule_sorted['Факультет'] == fak_original) & (schedule_sorted['Курс'].isin([course_original]))]
+    fak_course_url = schedule_regular_sorted.loc[(schedule_regular_sorted['Факультет'] == fak_original) & (schedule_regular_sorted['Курс'].isin([course_original]))]
     fak_course_url_final = fak_course_url[fak_course_url.columns[2]].to_string(index=False)
     # print(fak_course_url_final)
     # print(type(fak_course_url_final))
     call.data = fak_course_url_final
     # bot.send_message(call.chat.id, fak_course_url_final)
     get_group_list(call)
+
+# @bot.callback_query_handler(func=lambda call: "schedule-exam" and "fak" and "course" in call.data)
+# def find_fak_course(call):
+#     global fak_course_url_final
+#     fak_course_url = schedule_exam_sorted.loc[(schedule_exam_sorted['Факультет'] == fak_original) & (schedule_exam_sorted['Курс'].isin([course_original]))]
+#     fak_course_url_final = fak_course_url[fak_course_url.columns[2]].to_string(index=False)
+#     # print(fak_course_url_final)
+#     # print(type(fak_course_url_final))
+#     call.data = fak_course_url_final
+#     # bot.send_message(call.chat.id, fak_course_url_final)
+#     get_group_list(call)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('http'))
 def get_group_list(call):
@@ -129,66 +144,140 @@ def get_group_list(call):
     schedule_df=requests.get(fak_course_url_final).content
     excel_file= pd.ExcelFile(schedule_df)
     # print(excel_file)
-    for sheet_name in excel_file.sheet_names:
-        df = excel_file.parse(sheet_name)
-        if sheet_name == "Розклад":
-            sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
-            sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
-            index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
-            df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
-            df = df.replace('\n','', regex=True)
-            schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
-            # print(schedule_df_new)
-            new_header = schedule_df_new.iloc[0] #grab the first row for the header
-            schedule_df_new = schedule_df_new[1:] #take the data less the header row
-            schedule_df_new.columns = new_header #set the header row as the df header
-            schedule_df_final = schedule_df_new
-            schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
-            # print(schedule_df_final)
-            header_list = list(schedule_df_final.columns)
-            group_list = [x for x in header_list if x.endswith('група')]
-            print(group_list)
-            print(type(group_list))
-            print_group_schedule(call)
 
-        elif sheet_name == "Лист1":
-            sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
-            sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
-            index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
-            df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
-            df = df.replace('\n','', regex=True)
-            schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
-            new_header = schedule_df_new.iloc[0] #grab the first row for the header
-            schedule_df_new = schedule_df_new[1:] #take the data less the header row
-            schedule_df_new.columns = new_header #set the header row as the df header
-            schedule_df_final = schedule_df_new
-            schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
-            header_list = list(schedule_df_final.columns)
-            group_list = [x for x in header_list if x.endswith('група')]
-            print_group_schedule(call)
-            # print(group_list)
-            # print(type(group_list))
-            # group_number = "4 група"
+    sheet_names = excel_file.sheet_names
+    # print(sheet_names)
+
+    sheet_names = [name.casefold() for name in sheet_names]# Format the list of sheet names
+    # print(sheet_names)
+
+    filtered_schedule_list = list(filter(lambda el: not 'начитка' in el, sheet_names))
+    # print(filtered_schedule_list)
+
+    index = sheet_names.index(filtered_schedule_list[0].lower())# Get the index that matches our sheet to find
+    # print(index)
+
+    if filtered_schedule_list[0] in sheet_names:
+        df = pd.read_excel(excel_file, sheet_name = index)# Feed this index into pandas
+        df = df.replace('\n','', regex=True)
+        df = df.replace('№тижня','Номертижня', regex=True)
+        # print(df)
+        # df.to_excel("output_1.xlsx", index = False)
+
+        schedule_df_new = df.loc[(df == 'Номертижня').any(1).idxmax():].iloc[: , 0:].reset_index(drop=True).T.drop_duplicates().T
+        new_header = schedule_df_new.iloc[0] #grab the first row for the header
+        schedule_df_new = schedule_df_new[1:] #take the data less the header row
+        schedule_df_new.columns = new_header #set the header row as the df header
+        # print(schedule_df_new)
+
+        schedule_df_final = schedule_df_new
+        schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+        # print(schedule_df_final)
+        # schedule_df_final.to_excel("output_2.xlsx", index = False)
+
+        header_list = list(schedule_df_final.columns)
+        group_list = [x for x in header_list if x.endswith('група')]
+        # print(group_list)
+
+        print_group_schedule(call)
+
+
+
+
+    # for sheet_name in excel_file.sheet_names:
+    #     df = excel_file.parse(sheet_name)
+    #     if sheet_name == "Розклад":
+    #         sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+    #         sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+    #         index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+    #         df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+    #         df = df.replace('\n','', regex=True)
+    #         schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+    #         print(schedule_df_new)
+    #         new_header = schedule_df_new.iloc[0] #grab the first row for the header
+    #         schedule_df_new = schedule_df_new[1:] #take the data less the header row
+    #         schedule_df_new.columns = new_header #set the header row as the df header
+    #         schedule_df_final = schedule_df_new
+    #         schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+    #         print(schedule_df_final)
+    #         schedule_df_final.to_excel("output1231.xlsx", index = False)
+    #         header_list = list(schedule_df_final.columns)
+    #         group_list = [x for x in header_list if x.endswith('група')]
+    #         # print(group_list)
+    #         # print(type(group_list))
+
+
+        # elif sheet_name == "Лист1":
+        #     sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+        #     sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+        #     index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+        #     df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+        #     df = df.replace('\n','', regex=True)
+        #     schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+        #     new_header = schedule_df_new.iloc[0] #grab the first row for the header
+        #     schedule_df_new = schedule_df_new[1:] #take the data less the header row
+        #     schedule_df_new.columns = new_header #set the header row as the df header
+        #     schedule_df_final = schedule_df_new
+        #     schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+        #     schedule_df_final.to_excel("output1231.xlsx", index = False)
+        #     header_list = list(schedule_df_final.columns)
+        #     group_list = [x for x in header_list if x.endswith('група')]
+        #     print_group_schedule(call)
+
+        # elif sheet_name != "Лист1" or "Розклад":
+
+            
+
+        #     sheet_names = excel_file.sheet_names# Get all the sheetnames as a list
+        #     sheet_names = [name.lower() for name in sheet_names]# Format the list of sheet names
+        #     index = sheet_names.index(sheet_name.lower())# Get the index that matches our sheet to find
+        #     df = pd.read_excel(excel_file, sheet_name=index)# Feed this index into pandas
+        #     df = df.replace('\n','', regex=True)
+        #     schedule_df_new = df.loc[(df == 'Деньтижня').any(1).idxmax():].iloc[: , 1:].reset_index(drop=True).T.drop_duplicates().T
+        #     new_header = schedule_df_new.iloc[0] #grab the first row for the header
+        #     schedule_df_new = schedule_df_new[1:] #take the data less the header row
+        #     schedule_df_new.columns = new_header #set the header row as the df header
+        #     schedule_df_final = schedule_df_new
+        #     schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(schedule_df_final.columns[0])]
+        #     schedule_df_final.to_excel("output1231.xlsx", index = False)
+        #     header_list = list(schedule_df_final.columns)
+        #     group_list = [x for x in header_list if x.endswith('група')]
+        #     print_group_schedule(call)
 
 def print_group_schedule(call):
+    global keyboardmain
     keyboard_group = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=True)
     for button_content in group_list:
         btn =  types.KeyboardButton(button_content)
         keyboard_group.add(btn)
-    msg = bot.send_message(call.chat.id, 'Выберите', reply_markup=keyboard_group)
+    msg = bot.send_message(call.chat.id, 'Оберіть групу', reply_markup = keyboard_group)
     bot.register_next_step_handler(msg, on_selection)
+
 def on_selection(message):
     group_number = message.text
-    print(group_number)
-    schedule_df_group = schedule_df_final[[header_list[-1], header_list[0], header_list[1], group_number]].dropna(how='all').reset_index(drop=True)
-    schedule_df_group[group_number] = schedule_df_group[group_number] + ' ' + schedule_df_group.shift(-1)[group_number]
-    schedule_df_group = schedule_df_group.dropna(thresh=2).reset_index(drop=True)
-    schedule_df_group.to_excel("output.xlsx", index = False)
-    schedule_df_group_styled = schedule_df_group.style.background_gradient()
+    # print(group_number)
+    schedule_df_group = schedule_df_final[[header_list[0], header_list[1], header_list[2], group_number]].dropna(how='all').reset_index(drop=True)
+
+    # schedule_df_group[group_number] = schedule_df_group[group_number] + ' ' + schedule_df_group.shift(-1)[group_number]
+    # schedule_df_group = schedule_df_group.dropna(thresh=2).reset_index(drop=True)
+
+    schedule_df_group[[header_list[0], header_list[1], header_list[2]]] = schedule_df_group[[header_list[0], header_list[1], header_list[2]]].fillna(method = 'ffill')
+    schedule_df_group = schedule_df_group.dropna(thresh=1)
+    # schedule_df_group.to_excel("output_3.xlsx", index = False)
+    
+    schedule_df_group1 = schedule_df_group.groupby([header_list[0], header_list[1], header_list[2]], sort = False, dropna = True)[group_number].apply(lambda x: ' / '.join(map(str, x))).reset_index()
+    # print(schedule_df_group1)
+    # schedule_df_group1.to_excel("output_4.xlsx", index = False)
+
+    # schedule_df_group1.to_excel("output_5.xlsx", index = False)
+    schedule_df_group_styled = schedule_df_group1.style.background_gradient()
     dfi.export(schedule_df_group_styled,"mytable.png")
     schedule_img = open("mytable.png", 'rb')
     bot.send_photo(message.chat.id, schedule_img)
-    # bot.send_message(message.chat.id, schedule_pic)
+    back_main_menu_key = types.InlineKeyboardMarkup(row_width=1)
+    backbutton = types.InlineKeyboardButton(text="Назад", callback_data="mainmenu")
+    back_main_menu_key.add(backbutton)
+    bot.send_message(message.chat.id, "Повернутися до головного меню", reply_markup=back_main_menu_key)
 
 ###################################################################################################################################################################
 @bot.callback_query_handler(func=lambda call: True)
@@ -199,54 +288,74 @@ def callback_inline(call):
         get_news = types.InlineKeyboardButton(text="Новини", callback_data="get-news")
         get_kafedra = types.InlineKeyboardButton(text="Факультети і кафедри", callback_data="get-kafedra")
         get_contacts = types.InlineKeyboardButton(text="Контакти", callback_data="get-contacts")
-        keyboardmain.add(get_schedule, get_news, get_kafedra, get_contacts)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Виберіть необхідне:", reply_markup=keyboardmain)
+        get_chart = types.InlineKeyboardButton(text="Карта", callback_data="get_map")
+        keyboardmain.add(get_schedule, get_news, get_kafedra, get_contacts, get_chart)
+        bot.send_message(call.message.chat.id, text="Виберіть необхідне:", reply_markup=keyboardmain)
 ###################################################################################################################################################################
     
     elif call.data == "get-schedule":
         keyboard = types.InlineKeyboardMarkup()
         schedule_regular = types.InlineKeyboardButton(text="звичайний", callback_data="schedule-regular")
         schedule_exam = types.InlineKeyboardButton(text="екзаменаційний", callback_data="schedule-exam")
+        timetable = types.InlineKeyboardButton(text="розклад дзвінків", callback_data="timetable")
         backbutton = types.InlineKeyboardButton(text="Назад", callback_data="mainmenu")
-        keyboard.add(schedule_regular, schedule_exam, backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Виберіть необхідне:", reply_markup=keyboard)
+        keyboard.add(schedule_regular, schedule_exam, timetable, backbutton)
+        bot.send_message(call.message.chat.id, text="Виберіть необхідне:", reply_markup=keyboard)
+
     elif call.data == "schedule-regular":
         enter_fakulty_name(call.message)
-        keyboard3 = types.InlineKeyboardMarkup()
-        backbutton = types.InlineKeyboardButton(text="Назад", callback_data="get-schedule")
-        keyboard3.add(backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Ввести дані або повернутися", reply_markup=keyboard3)
+
     elif call.data == "schedule-exam":
-        keyboard3 = types.InlineKeyboardMarkup()
+        enter_fakulty_name(call.message)
+        
+    elif call.data == "timetable":
+        keyboard_timetable = types.InlineKeyboardMarkup()
         backbutton = types.InlineKeyboardButton(text="Назад", callback_data="get-schedule")
-        keyboard3.add(backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Ввести дані або повернутися", reply_markup=keyboard3)
+        keyboard_timetable.add(backbutton)
+        timetable_img = open('timetable.PNG', 'rb')
+        bot.send_photo(call.message.chat.id, timetable_img, reply_markup=  keyboard_timetable )    
 ###################################################################################################################################################################
     
     elif call.data == "get-news":
-        keyboard = types.InlineKeyboardMarkup()
-        print_news(call.message)
+        keyboard_news = types.InlineKeyboardMarkup()
         more_news = types.InlineKeyboardButton(text="Читати більше на сайті", callback_data="read_more")
         backbutton = types.InlineKeyboardButton(text="До головного меню", callback_data="mainmenu")
-        keyboard.add(more_news,backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Виведено останні 3 новини:", reply_markup=keyboard)
+        keyboard_news.add(more_news,backbutton)
+        bot.send_message(call.message.chat.id, text="Виведено останні 3 новини:", reply_markup=keyboard_news)
 ###################################################################################################################################################################
     
     elif call.data == "get-kafedra":
-        keyboard = types.InlineKeyboardMarkup()
+        keyboard_kafedra = types.InlineKeyboardMarkup()
         fakultets = types.InlineKeyboardButton(text="Факультети", callback_data="fakultets")
         kafedras = types.InlineKeyboardButton(text="Кафедри", callback_data="kafedras")
         backbutton = types.InlineKeyboardButton(text="Назад", callback_data="mainmenu")
-        keyboard.add(fakultets, kafedras, backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Виберіть необхідне:", reply_markup=keyboard)    
+        keyboard_kafedra.add(fakultets, kafedras, backbutton)
+        bot.send_message(call.message.chat.id, text="Виберіть необхідне:", reply_markup=keyboard_kafedra)    
 ###################################################################################################################################################################
     
     elif call.data == "get-contacts":
-        keyboard = types.InlineKeyboardMarkup()
+        keyboard_contacts = types.InlineKeyboardMarkup()
         rele2 = types.InlineKeyboardButton(text="another layer", callback_data="gg")
         backbutton = types.InlineKeyboardButton(text="back", callback_data="mainmenu")
-        keyboard.add(rele2,backbutton)
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="replaced text", reply_markup=keyboard)
+        keyboard_contacts.add(rele2,backbutton)
+        bot.send_message(call.message.chat.id, text="Перелік контактів", reply_markup=keyboard_contacts)
+###################################################################################################################################################################
+    elif call.data == "get_map":
+        keyboard_map = types.InlineKeyboardMarkup()
+        backbutton = types.InlineKeyboardButton(text="back", callback_data="mainmenu")
+        keyboard_map.add(backbutton)
+        map_img = open('map.PNG', 'rb')
+        bot.send_photo(call.message.chat.id, map_img)
+        bot.send_message(call.message.chat.id, text='''А - вул. Кіото 19 (головний корпус)
+Б - вул. Кіото 19 (бібліотечний корпус)
+В - вул. Кіото 19 (Конгрес-центр)
+Г - вул. Мілютенка 8
+Д - вул. Кіото 21
+Е - вул. Мілютенка 4
+Л - вул. Кіото 23
+М - вул. Чигоріна 57
+Н - вул. Чигоріна 57а
+Р - вул. Раєвського 36''', reply_markup=keyboard_map)
 ###################################################################################################################################################################
 if __name__ == "__main__":
     bot.polling(none_stop=True)

@@ -24,11 +24,11 @@ for tag in faculty_table_row.find_all('li'):
     a_tag = tag.find('a')
     try:
         if 'href' in a_tag.attrs:
-            url = a_tag.text, 'https://knute.edu.ua' + a_tag.get('href')
+            url = a_tag.text, 'https://knute.edu.ua' + a_tag.get('href').replace(' ','%20')
             urls.append(url)
     except:
         pass
 
-#print(urls)
+# print(urls)
 df = pd.DataFrame(urls, columns=['Назва', 'URL'])
 df.to_csv('kafedra.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Назва', 'URL'])

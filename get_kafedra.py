@@ -30,5 +30,12 @@ for tag in faculty_table_row.find_all('li'):
         pass
 
 # print(urls)
-df = pd.DataFrame(urls, columns=['Назва', 'URL'])
-df.to_csv('kafedra.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Назва', 'URL'])
+fak_kaf_new = pd.DataFrame(urls, columns=['Назва', 'URL'])
+fak_kaf_sorted = fak_kaf_new.sort_values(by=['Назва'])
+fak_kaf_sorted.to_csv('kafedra.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Назва', 'URL'])
+
+kaf_df, fak_df = [x for _, x in fak_kaf_sorted.groupby(fak_kaf_sorted['Назва'].str.contains("Факультет"))]
+
+kaf_df = dict(kaf_df.values)
+
+fak_df = dict(fak_df.values)

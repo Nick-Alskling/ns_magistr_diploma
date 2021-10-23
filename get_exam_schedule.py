@@ -16,10 +16,15 @@ resp.encoding = resp.apparent_encoding
 knteu_rasp_page = resp.text
 # застосуємо html-парсер до завантаженої сторінки з розкладами 'knteu_rasp_page'
 parsed_rasp = bs(knteu_rasp_page, features='html.parser')
-#print(dir(parsed_rasp))
-back = parsed_rasp.find('span', text='БАКАЛАВР')
+# print(dir(parsed_rasp))
+back = parsed_rasp.find_all('span', text='РОЗКЛАД ЕКЗАМЕНАЦІЙНОЇ СЕСІЇ')
+print(back)
+
+
+
 rasp_table = back.find_parent('strong').find_parent('h3').findNextSibling('table')
-#print(rasp_table)
+print(rasp_table)
+
 # в результаті виділили таблицю з розкладом
 rasp_lines = rasp_table.find_all('tr')
 #print(rasp_lines)
@@ -71,9 +76,9 @@ result_schedule_prefinal = pd.concat([schedule_prefinal, schedule_prefinal_mag],
 #print(df.head(10))
 result_schedule_prefinal['URL'].values[:5]
 # відсортуєм по факультету-курсу
-schedule_regular_sorted = result_schedule_prefinal.sort_values(by=['Факультет', 'Курс'])
-schedule_regular_sorted.set_index('Факультет')[:7]
-schedule_regular_sorted.to_csv('schedule.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Факультет', 'Курс', 'URL'])
+schedule_exam_sorted = result_schedule_prefinal.sort_values(by=['Факультет', 'Курс'])
+schedule_exam_sorted.set_index('Факультет')[:7]
+schedule_exam_sorted.to_csv('schedule_exam.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Факультет', 'Курс', 'URL'])
 pd.set_option("display.max_colwidth", 10000)
-# print(schedule_regular_sorted)
-# print(schedule_regular_sorted.dtypes)
+# print(schedule_exam_sorted)
+# print(schedule_exam_sorted.dtypes)

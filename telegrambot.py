@@ -371,12 +371,12 @@ def callback_inline(call):
         # with open('contacts.csv', 'r', newline='', encoding='utf-8') as csvfile:
         #     for i in range(3):
         #         bot.send_message(call.message.chat.id, csvfile.readlines()[1:].encode('utf-8'))
-        backbutton = types.InlineKeyboardButton(text="back", callback_data="mainmenu")
+        backbutton = types.InlineKeyboardButton(text="До головного меню", callback_data="mainmenu")
         keyboard_contacts.add(backbutton)
-        bot.send_message(call.message.chat.id, text="Перелік контактів", reply_markup=keyboard_contacts)
+        bot.send_message(call.message.chat.id, text="Повернутись", reply_markup=keyboard_contacts)
         for index, row in contacts_df.iterrows():
             bot.send_message(call.message.chat.id,row['Відділ'] + " " + row['Телефон'] + " " +  row['email'])
-
+        bot.send_message(call.message.chat.id, text="Повернутись", reply_markup=keyboard_contacts)
 
 ###################################################################################################################################################################
     elif call.data == "get_map":

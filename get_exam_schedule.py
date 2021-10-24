@@ -12,21 +12,20 @@ resp.text[:500]
 resp.encoding
 resp.apparent_encoding
 resp.encoding = resp.apparent_encoding
-#print(resp.text[:500])
+# print(resp.text)
 knteu_rasp_page = resp.text
 # застосуємо html-парсер до завантаженої сторінки з розкладами 'knteu_rasp_page'
 parsed_rasp = bs(knteu_rasp_page, features='html.parser')
 # print(dir(parsed_rasp))
-back = parsed_rasp.find_all('span', text='РОЗКЛАД ЕКЗАМЕНАЦІЙНОЇ СЕСІЇ')
-print(back)
+# back = parsed_rasp.find('span', string = "РОЗКЛАД ЕКЗАМЕНАЦІЙНОЇ СЕСІЇ")
+# print(back)
 
-
-
-rasp_table = back.find_parent('strong').find_parent('h3').findNextSibling('table')
-print(rasp_table)
+exam_table_row = parsed_rasp.find_all("table")  # returns a list of tables
+bach_exam_table_row = exam_table_row[6]
+# print(bach_exam_table_row)
 
 # в результаті виділили таблицю з розкладом
-rasp_lines = rasp_table.find_all('tr')
+rasp_lines = bach_exam_table_row.find_all('tr')
 #print(rasp_lines)
 # в першому елементі - 'шапка' таблиці
 head = rasp_lines[0].find_all('td')
@@ -40,9 +39,9 @@ rasp_lines[1:]
 hrefs = [[a['href'], a.text.split('\n')[0]] for a in rasp_lines[1].find_all('a')]
 #print(hrefs)
 
-back_mag = parsed_rasp.find('span', text='МАГІСТР')
-rasp_table_mag = back_mag.find_parent('strong').find_parent('h3').findNextSibling('table')
-rasp_lines_mag = rasp_table_mag.find_all('tr')
+mag_exam_table_row = exam_table_row[7]
+# print(mag_exam_table_row)
+rasp_lines_mag = mag_exam_table_row.find_all('tr')
 head_mag = rasp_lines_mag[0].find_all('td')
 fac_names_mag = [name.text for name in head_mag]
 rasp_lines_mag[1:]

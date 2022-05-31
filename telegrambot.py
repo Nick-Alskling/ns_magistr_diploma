@@ -1,5 +1,6 @@
 import telebot
 from telebot import types
+<<<<<<< HEAD
 import random
 import csv
 import get_regular_schedule
@@ -15,6 +16,19 @@ import pandas as pd
 import numpy as np
 import dataframe_image as dfi
 bot = telebot.TeleBot('1796930178:AAFZUChk3App456JxIjSQkvKOzrVjAIApi0')
+=======
+import requests
+from bs4 import BeautifulSoup as bs
+import pandas as pd
+import dataframe_image as dfi
+from csv import reader
+from get_schedule import schedule_regular_sorted
+from get_kafedra import kaf_df, fak_df
+from get_contacts import contacts_df
+import gc
+bot = telebot.TeleBot('2067658930:AAHk7crhhbvxSZ0AFr0NswT4YYQnhjZ5f-g')
+
+>>>>>>> 8cbd64f (latest version)
 pd.set_option("display.max_colwidth", 10000)
 
 store_fak_clicked = None
@@ -47,8 +61,20 @@ legend_course = {
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+<<<<<<< HEAD
     bot.reply_to(
         message, f'Я інформаційний чатбот. Приємно познайомитися, {message.from_user.first_name}')
+=======
+    keyboardmain = types.InlineKeyboardMarkup(row_width=2)
+    mainmenu = types.InlineKeyboardButton(
+        text="Головне меню", callback_data="mainmenu")
+    keyboardmain.add(mainmenu)
+    bot.reply_to(
+        message, f'Я інформаційний чатбот. Приємно познайомитися, {message.from_user.first_name}', reply_markup=keyboardmain)
+
+    # bot.send_message(message.chat.id, f"Натисніть, аби перейти:",
+    #                  reply_markup=keyboardmain)
+>>>>>>> 8cbd64f (latest version)
 
 ############################################################################################################################################################################
 
@@ -70,7 +96,11 @@ def main_menu(message):
                      get_contacts, get_chart)
     bot.send_message(message.chat.id, f"Натисніть, аби перейти:",
                      reply_markup=keyboardmain)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 def enter_fakulty_name(message):
     keyboard_fak = types.InlineKeyboardMarkup(row_width=3)
@@ -89,7 +119,11 @@ def enter_fakulty_name(message):
                      fak_FRGTB, fak_FFO, backbutton)
     bot.send_message(message.chat.id, "Виберіть факультет",
                      reply_markup=keyboard_fak)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 def enter_course_number(message):
     keyboard_course = types.InlineKeyboardMarkup(row_width=3)
@@ -111,7 +145,11 @@ def enter_course_number(message):
                         course_4, course_1m, course_2m, backbutton)
     bot.send_message(message.chat.id, "Виберіть курс:",
                      reply_markup=keyboard_course)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 ############################################################################################################################################################################
 
 
@@ -124,7 +162,11 @@ def fak_find(call):
     fak_original = legend_fak.get(store_fak_clicked)
     enter_course_number(call.message)
     # print(fak_original, not(fak_original))
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 @bot.callback_query_handler(func=lambda call: "course" in call.data)
 def course_find(call):
@@ -135,7 +177,11 @@ def course_find(call):
     course_original = legend_course.get(store_course_clicked)
     # print(course_original, not(course_original))
     find_fak_course(call.message)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 @bot.callback_query_handler(func=lambda call: "fak" and "course" in call.data)
 def find_fak_course(call):
@@ -149,7 +195,11 @@ def find_fak_course(call):
     call.data = fak_course_url_final
     # bot.send_message(call.chat.id, fak_course_url_final)
     get_group_list(call)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('http'))
 def get_group_list(call):
@@ -158,6 +208,7 @@ def get_group_list(call):
     global header_list
     schedule_df = requests.get(fak_course_url_final).content
     excel_file = pd.ExcelFile(schedule_df)
+<<<<<<< HEAD
     sheet_names = excel_file.sheet_names
     # print(sheet_names)
     # Format the list of sheet names
@@ -169,14 +220,33 @@ def get_group_list(call):
     # Get the index that matches our sheet to find
     index = sheet_names.index(filtered_schedule_list[0].lower())
     if filtered_schedule_list[0] in sheet_names:
+=======
+    sheets = excel_file.sheet_names
+    # Format the list of sheet names
+    schedule_sheet_names = [name.casefold() for name in sheets]
+    filtered_schedule_list = list(
+        filter(lambda el: not 'начитка' in el, schedule_sheet_names))
+
+    print(filtered_schedule_list)
+    
+    # Get the index that matches our sheet to find
+    index = schedule_sheet_names.index(filtered_schedule_list[0].lower())
+    if filtered_schedule_list[0] in schedule_sheet_names:
+>>>>>>> 8cbd64f (latest version)
         # Feed this index into pandas
         df = pd.read_excel(excel_file, sheet_name=index)
         df = df.replace('\n', '', regex=True)
         df = df.replace('№тижня', 'Номертижня', regex=True)
+<<<<<<< HEAD
         print(df)
         schedule_df_new = df.loc[(df == 'Номертижня').any(1).idxmax(
         ):].iloc[:, 0:].reset_index(drop=True).T.drop_duplicates().T
         print(schedule_df_new)
+=======
+        # print(df)
+        schedule_df_new = df.loc[(df == 'Номертижня').any(1).idxmax(
+        ):].iloc[:, 0:].reset_index(drop=True).T.drop_duplicates().T
+>>>>>>> 8cbd64f (latest version)
         # grab the first row for the header
         new_header = schedule_df_new.iloc[0]
         # take the data less the header row
@@ -186,10 +256,17 @@ def get_group_list(call):
         schedule_df_final = schedule_df_final[schedule_df_final.iloc[:, 0].ne(
             schedule_df_final.columns[0])]
         header_list = list(schedule_df_final.columns)
+<<<<<<< HEAD
         # print(header_list)
         group_list = [x for x in header_list if x.endswith('група')]
         print_group_schedule(call)
 
+=======
+        print(header_list)
+        group_list = [x for x in header_list if x.endswith('група')]
+        print_group_schedule(call)
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 def print_group_schedule(call):
     keyboard_group = types.ReplyKeyboardMarkup(
@@ -199,16 +276,26 @@ def print_group_schedule(call):
         keyboard_group.add(schedule_btn)
     msg = bot.send_message(call.chat.id, 'Оберіть групу',
                            reply_markup=keyboard_group)
+<<<<<<< HEAD
     bot.register_next_step_handler(msg, on_selection)
 
 
 def on_selection(message):
+=======
+    bot.register_next_step_handler(msg, schedule_on_selection)
+    gc.collect()
+
+def schedule_on_selection(message):
+>>>>>>> 8cbd64f (latest version)
     group_number = message.text
     # print(group_number)
     schedule_df_group = schedule_df_final[[header_list[0], header_list[1],
                                            header_list[2], group_number]].dropna(how='all').reset_index(drop=True)
+<<<<<<< HEAD
     # schedule_df_group[group_number] = schedule_df_group[group_number] + ' ' + schedule_df_group.shift(-1)[group_number]
     # schedule_df_group = schedule_df_group.dropna(thresh=2).reset_index(drop=True)
+=======
+>>>>>>> 8cbd64f (latest version)
     schedule_df_group[[header_list[0], header_list[1], header_list[2]]] = schedule_df_group[[
         header_list[0], header_list[1], header_list[2]]].fillna(method='ffill')
     schedule_df_group = schedule_df_group.dropna(thresh=1)
@@ -228,7 +315,11 @@ def on_selection(message):
     back_main_menu_key.add(backbutton)
     bot.send_message(message.chat.id, "Повернутися до головного меню",
                      reply_markup=back_main_menu_key)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 ##################################################################################################################################################################
 
 
@@ -241,14 +332,22 @@ def fakultets_output(call):
         keyboard_fakultet.add(faculty_btn)
     bot.send_message(call.message.chat.id, 'Оберіть факультет:',
                      reply_markup=keyboard_fakultet)
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 8cbd64f (latest version)
     keyboard_return = types.InlineKeyboardMarkup()
     backbutton = types.InlineKeyboardButton(
         text="До головного меню", callback_data="mainmenu")
     keyboard_return.add(backbutton)
     bot.send_message(call.message.chat.id, "Натисніть",
                      reply_markup=keyboard_return)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 @bot.callback_query_handler(func=lambda call: "kafedras" in call.data)
 def fakultets_output(call):
@@ -266,16 +365,30 @@ def fakultets_output(call):
     keyboard_return.add(backbutton)
     bot.send_message(call.message.chat.id, "Натисніть",
                      reply_markup=keyboard_return)
+<<<<<<< HEAD
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 ##################################################################################################################################################################
 
 
 @bot.callback_query_handler(func=lambda call: "novyny" in call.data)
 def print_news(call):
     with open('news.csv', 'r', newline='', encoding='utf-8') as csvfile:
+<<<<<<< HEAD
         for i in range(3):
             # print(csvfile.readline().encode('utf-8'))
             bot.send_message(call.message.chat.id,
                              csvfile.readline()[1:].encode('utf-8'))
+=======
+        csv_reader = reader(csvfile)
+        header = next(csv_reader)
+        if header != None:
+            for i in range(3):
+                # print(csvfile.readline().encode('utf-8'))
+                bot.send_message(call.message.chat.id,
+                                 csvfile.readline()[1:].encode('utf-8'))
+>>>>>>> 8cbd64f (latest version)
     keyboard_news = types.InlineKeyboardMarkup()
     news = types.InlineKeyboardButton(
         text="Читати більше", url="https://knute.edu.ua/b/read-news/?uk")
@@ -284,15 +397,29 @@ def print_news(call):
     keyboard_news.add(news, backbutton)
     bot.send_message(call.message.chat.id, text="Виберіть дію:",
                      reply_markup=keyboard_news)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 @bot.callback_query_handler(func=lambda call: "anonsy" in call.data)
 def print_news(call):
     with open('announces.csv', 'r', newline='', encoding='utf-8') as csvfile:
+<<<<<<< HEAD
         for i in range(3):
             # print(csvfile.readline().encode('utf-8'))
             bot.send_message(call.message.chat.id,
                              csvfile.readline()[1:].encode('utf-8'))
+=======
+        csv_reader = reader(csvfile)
+        header = next(csv_reader)
+        if header != None:
+            for i in range(3):
+                # print(csvfile.readline().encode('utf-8'))
+                bot.send_message(call.message.chat.id,
+                                 csvfile.readline()[1:].encode('utf-8'))
+>>>>>>> 8cbd64f (latest version)
     keyboard_announces = types.InlineKeyboardMarkup()
     announces = types.InlineKeyboardButton(
         text="Читати більше", url="https://knute.edu.ua/b/read-allnnoun/?uk")
@@ -301,7 +428,11 @@ def print_news(call):
     keyboard_announces.add(announces, backbutton)
     bot.send_message(call.message.chat.id, text="Виберіть дію:",
                      reply_markup=keyboard_announces)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 ###################################################################################################################################################################
 
 
@@ -343,9 +474,12 @@ def callback_inline(call):
     elif call.data == "schedule-regular":
         enter_fakulty_name(call.message)
 
+<<<<<<< HEAD
     # elif call.data == "schedule-exam":
     #     enter_fakulty_name(call.message)
 
+=======
+>>>>>>> 8cbd64f (latest version)
     elif call.data == "timetable":
         keyboard_timetable = types.InlineKeyboardMarkup()
         backbutton = types.InlineKeyboardButton(
@@ -402,7 +536,11 @@ def callback_inline(call):
     elif call.data == "get_map":
         keyboard_map = types.InlineKeyboardMarkup()
         backbutton = types.InlineKeyboardButton(
+<<<<<<< HEAD
             text="back", callback_data="mainmenu")
+=======
+            text="До головного меню", callback_data="mainmenu")
+>>>>>>> 8cbd64f (latest version)
         keyboard_map.add(backbutton)
         map_img = open('map.PNG', 'rb')
         bot.send_photo(call.message.chat.id, map_img)
@@ -416,7 +554,11 @@ def callback_inline(call):
 М - вул. Чигоріна 57
 Н - вул. Чигоріна 57а
 Р - вул. Раєвського 36''', reply_markup=keyboard_map)
+<<<<<<< HEAD
 
+=======
+    gc.collect()
+>>>>>>> 8cbd64f (latest version)
 
 ##################################################################################################################################################################
 if __name__ == "__main__":

@@ -1,4 +1,5 @@
 ﻿Факультет;Курс;URL
+<<<<<<< HEAD
 ФІТ;1;https://knute.edu.ua/file/MjY=/ac74618a9dee410b4e57d49cfc9b9252.xls
 ФІТ;1м;https://knute.edu.ua/file/MjY=/75f80f23ffbb7949eb1176976f65e607.xls
 ФІТ;2;https://knute.edu.ua/file/MjY=/c80775199286737a102dc56b11f475e1.xls
@@ -35,3 +36,41 @@
 ФФО;2м;https://knute.edu.ua/file/MjQ=/293863d8612d9f2ae1f52c0a100f3ac8.xls
 ФФО;3;https://knute.edu.ua/file/MjQ=/ef10fac0b7c7db5da6395943cc478715.xls
 ФФО;4;https://knute.edu.ua/file/MjQ=/5dd3ff8d3635c648125d343d7931ea52.xls
+=======
+ФІТ;1;https://knute.edu.ua/file/MjY=/48fb5f52e924439205e115e5b5f25bfd.xls
+ФІТ;1м;https://knute.edu.ua/file/MjY=/2f2052492ee0b75ce9833e76edce1e1c.xls
+ФІТ;2;https://knute.edu.ua/file/MjY=/97ec081956cbe7035f61aefce49e911e.xls
+ФІТ;2м;https://knute.edu.ua/file/MjY=/c90d036f2d48f4e6f6097909a81d6674.xls
+ФІТ;3;https://knute.edu.ua/file/MjY=/143298c03a3127f25177a538e1827a3b.xls
+ФІТ;4;https://knute.edu.ua/file/MjY=/962306e1c81ea593a753d6dd81ca727a.xls
+ФЕМП;1;https://knute.edu.ua/file/MjM=/e6dd6196d464bff502d3e443378960cf.xls
+ФЕМП;1м;https://knute.edu.ua/file/MjM=/73c2545c38f582e00fef7b99d9429cab.xls
+ФЕМП;2;https://knute.edu.ua/file/MjM=/1e2513f8e287871c2672b7f50b52799b.xls
+ФЕМП;2м;https://knute.edu.ua/file/MjM=/919b7ba72ca466fba74fc89b49b6ad51.xls
+ФЕМП;3;https://knute.edu.ua/file/MjM=/b86ff881d80a528befd3bb893c5ac9a1.xls
+ФЕМП;4;https://knute.edu.ua/file/MjM=/cc888ad2589259512b0fb7e1947cf066.xls
+ФМТП;1;https://knute.edu.ua/file/Mjc=/5c35d202a2eb4afde803f6e1be8b7621.xls
+ФМТП;1м;https://knute.edu.ua/file/Mjc=/8d08b8fcc4a1c6b456d97f211dde663f.xls
+ФМТП;2;https://knute.edu.ua/file/MjM=/9825b36965dbd79d20505e45b493b2b6.xls
+ФМТП;2м;https://knute.edu.ua/file/Mjc=/ddac5be217bb1b67273311bb30da84d8.xls
+ФМТП;3;https://knute.edu.ua/file/MjM=/098a7e7986fde5fae3b04a25cc7162ae.xls
+ФМТП;4;https://knute.edu.ua/file/MjM=/21664b6521a876d2b00e2858d5b49918.xls
+ФРГТБ;1;https://knute.edu.ua/file/MjU=/a61414be2033c7cb46c3efcbffce4845.xls
+ФРГТБ;1м;https://knute.edu.ua/file/MjU=/2f50b5cfe3184084b63f2ce5cb28fcaa.xls
+ФРГТБ;2;https://knute.edu.ua/file/MjU=/2a3d3b030bcc3bcf36e717de23e322ef.xls
+ФРГТБ;2м;https://knute.edu.ua/file/MjU=/ee75d49e17b6705dee70a482f057dddf.xls
+ФРГТБ;3;https://knute.edu.ua/file/MjU=/9cf48c33c710c71416bc76c7ebc2b0d7.xls
+ФРГТБ;4;https://knute.edu.ua/file/MjU=/2e73fc8d571d6eb6bbff591b094c13e6.xls
+ФТМ;1;https://knute.edu.ua/file/Mjc=/2dc8343a27218243b39d6b8f06e62067.xls
+ФТМ;1м;https://knute.edu.ua/file/Mjc=/119760a39cfb1deb73c3aed2288f8bf2.xls
+ФТМ;2;https://knute.edu.ua/file/Mjc=/fd1f57bdb3f5710c9d0cb446268e8a25.xls
+ФТМ;2м;https://knute.edu.ua/file/Mjc=/da1f1717d587ed4f8d975c97c5e86fa5.xls
+ФТМ;3;https://knute.edu.ua/file/Mjc=/623f6967346e6527291a15fa338d198e.xls
+ФТМ;4;https://knute.edu.ua/file/Mjc=/71fa4036de4952011f8e617735cb4ea7.xls
+ФФО;1;https://knute.edu.ua/file/MjQ=/3ee9c847e445476977ec2f4b89aadbea.xls
+ФФО;1м;https://knute.edu.ua/file/MjQ=/d1f15469d77186bf833c4fb2257490d3.xls
+ФФО;2;https://knute.edu.ua/file/MjQ=/626bb1fcd11c1ec14881719a8d7fbed1.xls
+ФФО;2м;https://knute.edu.ua/file/MjQ=/293863d8612d9f2ae1f52c0a100f3ac8.xls
+ФФО;3;https://knute.edu.ua/file/MjQ=/6c299bf6b7330eeaab7a80b4ffff0671.xls
+ФФО;4;https://knute.edu.ua/file/MjQ=/aa810086cb55de6dc638674b5b2a0baf.xls
+>>>>>>> 8cbd64f (latest version)

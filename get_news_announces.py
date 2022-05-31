@@ -11,12 +11,21 @@ resp.encoding
 resp.apparent_encoding
 resp.encoding = resp.apparent_encoding
 #print(resp.text[:500])
+<<<<<<< HEAD
+=======
+# knteu_announces_page = resp.text
+>>>>>>> 8cbd64f (latest version)
 knteu_news_page = resp.text
 parsed_news = bs(knteu_news_page, features='html.parser')
 #print(dir(parsed_news))
 back = parsed_news.find('h3', text='Новини')
+<<<<<<< HEAD
 #print(back)
 news_table_row = back.findNextSibling('div', {"class": "pull-left"})
+=======
+# print(back)
+news_table_row = back.find_next_sibling('div', {"class": "pull-left"})
+>>>>>>> 8cbd64f (latest version)
 #print(news_table_row)
 urls = []
 for tag in news_table_row.find_all('div', "nnews_item"):
@@ -26,9 +35,16 @@ for tag in news_table_row.find_all('div', "nnews_item"):
     if 'href' in a.attrs:
         url = date_tag, span_tag, 'https://knute.edu.ua' + a.attrs['href']
         urls.append(url)
+<<<<<<< HEAD
 # print(urls)
 # завантажимо результат в датафрейм
 df = pd.DataFrame(urls, columns=['Дата', 'Новина', 'URL'])
+=======
+print(urls)
+# завантажимо результат в датафрейм
+df = pd.DataFrame(urls, columns=['Дата', 'Новина', 'URL'])
+print(df)
+>>>>>>> 8cbd64f (latest version)
 df.to_csv('news.csv', index=False, encoding='utf-8-sig', sep=';',columns=['Дата', 'Новина', 'URL'])
 
 
@@ -77,4 +93,8 @@ for i in range(len(class_table)):
 
 # завантажимо результат в датафрейм
 df = pd.DataFrame(urls, columns=['Дата', "Заголовок", 'Анонс', 'URL'])
+<<<<<<< HEAD
 df.to_csv('announces.csv', index=False, encoding='utf-8-sig', sep=';', columns=['Дата', "Заголовок", 'Анонс', 'URL'])
+=======
+df.to_csv('announces.csv', index=False, encoding='utf-8-sig', sep=';', columns=['Дата', "Заголовок", 'Анонс', 'URL'])
+>>>>>>> 8cbd64f (latest version)
